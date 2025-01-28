@@ -7,7 +7,7 @@
 
   </nav>
   <main class="mt-5 justify-content-center">
-    <div class="container">
+    <div class="container-fluid">
       <div class="" v-if="!loaded">
         <h1>Drop your file here.</h1>
         <div class="form-group">
@@ -24,17 +24,31 @@
         <br />
         <h1>Here's is your report.</h1>
       </div>
-      <div class="row mt-4" v-if="loaded">
-        <div class="col-md-8">
+      <div class="" v-if="loaded">
+        <div>
           <h1 class="h2">Chart:</h1>
           <div style="display: flex;flex-direction:column;" >
             <EarningChart
-                :labels="labels"
-                :datasets="dataset"
+              canvas-id="chart1"
+              :labels="labels"
+              :datasets="dataset"
             ></EarningChart>
           </div>
-
         </div>
+
+        <div
+          v-if="monthlyLabels && monthlyDatasets"
+        >
+          <h1 class="h2">Monthly Chart:</h1>
+          <div style="display: flex;flex-direction:column;" >
+            <EarningChart
+              canvas-id="monthlyChart"
+              :labels="monthlyLabels"
+              :datasets="monthlyDatasets"
+            ></EarningChart>
+          </div>
+        </div>
+
         <div class="col-md-4">
           <h1 class="h2">Stats:</h1>
           <b>Balance: </b> <i>{{ total.balance  }} USD</i> <br />
@@ -65,7 +79,7 @@
           <tbody v-for="(item, idx) in earning" :key="idx" >
           <tr v-if="item['Ref ID']">
             <td>{{ item['Ref ID'] }}</td>
-            <td>{{ item['Date'].replace('"', "") }} </td>
+            <td>{{ item['Date'].replaceAll('"', "") }} </td>
             <td>{{item['Type']}}</td>
             <td>{{ item['Team'] }}</td>
             <td>{{item['Description']}}</td>
@@ -223,7 +237,7 @@ export default {
 
         this.labels = labels
         this.dataset = dataset
-        this.earning = earn
+        this.earning = earn.reverse()
         this.serviceFee = fee
         this.withdraw = withdraw
         this.refund = refund
@@ -245,6 +259,47 @@ export default {
   computed: {
     getFooterPosition() {
       return (this.loaded) ? "noPrint" : 'fixed'
+    },
+    monthlyData () {
+      const earning = [];
+      
+      let _prevMonthStr = null
+      let _totalEarning = 0
+
+      this.earning.forEach(_item => {
+        const date = new Date(_item.Date.replaceAll('"', ""))
+        const dateStr = date.toLocaleString('en-US', { year: 'numeric', month: 'short' });
+        
+
+        if (_prevMonthStr === dateStr) {
+          _totalEarning += parseFloat(_item.Amount)
+        } else {
+          console.log(_prevMonthStr, _totalEarning)
+
+          if (_prevMonthStr !== null) {
+            earning.push({
+              date: _prevMonthStr,
+              amount: _totalEarning,
+            })
+          }
+
+          _totalEarning = 0;
+          _prevMonthStr = dateStr
+        }
+
+      })
+
+      return {
+        earning
+      }
+    },
+    monthlyLabels () {
+      return this.monthlyData?.earning?.map?.(_item => _item.date)
+    },
+    monthlyDatasets () {
+      return {
+        earning: this.monthlyData?.earning?.map?.(_item => _item.amount)
+      }
     },
     total(x) {
       let earning = parseFloat(this.sum(this.earning))
