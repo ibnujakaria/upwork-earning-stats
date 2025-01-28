@@ -165,7 +165,7 @@ export default {
     readfile(event) {
       let reader = new FileReader();
       reader.onload =  () => {
-        this.data = JSON.parse(csvJSON(reader.result))
+        this.data = JSON.parse(csvJSON(reader.result)).reverse()
 
         let earn = []
         let fee = []
@@ -237,7 +237,7 @@ export default {
 
         this.labels = labels
         this.dataset = dataset
-        this.earning = earn.reverse()
+        this.earning = earn
         this.serviceFee = fee
         this.withdraw = withdraw
         this.refund = refund
